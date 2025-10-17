@@ -1,0 +1,158 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[german]{babel}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{float}              
+\usepackage{caption}
+\usepackage{adjustbox}
+\usepackage{lmodern}
+\usepackage{fourier}
+\usepackage[hidelinks]{hyperref}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\captionsetup[figure]{name=Abb.}
+
+\begin{document}
+
+\tableofcontents
+\newpage
+
+\section{Grundlagen Datenbankensysteme}
+
+\subsection{Probleme alternativer Programme}
+
+\begin{itemize}
+\item Redundanzen \& Inkonsistenzen
+\item eingeschränkter Zugriff auf Daten
+\item Probleme bei Mehrbenutzerzugriff
+\item Datenverluste, Integritäts- \& Sicherheitsprobleme
+\item hoher Entwicklungsaufwand
+\end{itemize}
+
+\subsection{Was ein Datenbanksystem ist}
+
+\begin{figure}[H]
+\begin{minipage}[t]{0.45\textwidth}
+\begin{itemize}
+\item \textbf{DBS} = Datenbank (DB) \& Datenbankmanagementsystem (DBMS)
+\begin{itemize}
+\item Datenbank: Sammlung verknüpfter, persistenter Daten (z. B. Uni mit Studierenden, Kursen usw.)
+\item DBMS: Software zur Speicherung, Verwaltung \& Zugriff auf diese Daten
+\end{itemize}
+\item Zweck: Einheitliche Verwaltung, Zugriff, Integrität, Sicherheit, Transaktionen, Wiederherstellung
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\vspace{5mm}
+\adjustbox{valign=c}{\includegraphics[scale=0.35]{pictures/FunkDBS.png}}
+\caption{Funktion Datenbanksystem}
+\end{minipage}
+\end{figure}
+
+\subsection{Codds 12 Regeln (Zweck eines DBS)}
+
+\begin{itemize}
+\item einheitliche Datenintegration
+\item effizienter Zugriff über Datenbanksprachen
+\item Metdatenkatalog
+\item versch. Benutzer-/Anwendungssichten
+\item Integritätsbedingungen von DBMS sichergestellt
+\item Sicherheitsmechanismen für Schutz der Daten
+\item Transaktionen, Synchronisation \& Widerherstellung nach BSOD
+\item Unterstützung für Ad-hoc Anfragen \& Schnittstellen
+\end{itemize}
+
+\subsection{Datenabstraktion \& Sichten}
+
+\begin{itemize}
+\item Drei Ebenen:
+\begin{enumerate}
+\item physical level: Spreicherung \& Strukturen
+\item logical level: Datenmodell, Entities \& Beziehungen
+\item view level: Benutzer- \& Anwendungssicht
+\end{enumerate}
+\item Ziel: Abstraktion \& Datenunabhängigkeit
+\begin{itemize}
+\item Physische Datenunabhängigkeit: Speicher ändern ohne Logikänderung
+\item Logische Datenunabhängigkeit: Logik ändern ohne Anwendungscode anzupassen
+\end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.5]{pictures/Datensicht.png}
+\caption{Sicht auf Daten}
+\end{figure}
+
+\subsection{Schemata \& Instanzen}
+
+\begin{itemize}
+\item Instanz = Inhalt
+\item Schema = Struktur
+\begin{itemize}
+\item konzeptionell/logisch: Grundlage für Design
+\item Sicht (externes Schema): während Anforderungsanalyse definiert
+\item physisch: Speicherstrukturen mit Relationen verbunden
+\end{itemize}
+\end{itemize}
+
+\subsection{Datenmodelle}
+
+\begin{itemize}
+\item \textbf{konzeptionell}: Entity Relationship (ER)-Modell, semantisch, objektorientiert
+\item \textbf{logisch}: relational, objektrelational, hierarchisch, Netzwerk, XML/JSON
+\end{itemize}
+
+\subsection{Datenbanksprachen}
+
+\begin{itemize}
+\item \textbf{DDL (Data Definition Language:} \\
+definiert Schemata \& Metadaten (z.B. CREATE TABLE)
+\item \textbf{DML (Data Manipulation Language):} \\
+Zugriff \& Veränderung der Daten (z.B. SELECT, INSERT)
+\begin{itemize}
+\item prozedural: wie abgefragt
+\item deklarativ: was abgefragt (SQL), nicht prozedural
+\end{itemize}
+\end{itemize}
+
+\subsection{Anwendungsarchitekturen}
+
+\begin{itemize}
+\item basiert auf Client-Server-Modell
+\item Trennung der Funktionalitäten einer Anwendung:
+\begin{itemize}
+\item Benutzeroberfläche und Interaktion
+\item Anwendungslogik (Business Logic)
+\item Datenverwaltungsfunktionalität (Speicherung, Verwaltung, Zugriff)
+\end{itemize}
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\begin{minipage}[t]{0.32\textwidth}
+\centering
+\includegraphics[width=\textwidth]{pictures/cs.png}
+\caption{Client-Server-Modell}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.32\textwidth}
+\centering
+\includegraphics[width=\textwidth]{pictures/2s.png}
+\caption{2-schichtige Architektur}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.32\textwidth}
+\centering
+\includegraphics[width=\textwidth]{pictures/3s.png}
+\caption{3-schichtige Architektur}
+\end{minipage}
+\end{figure}
+
+\end{document}
