@@ -12,7 +12,19 @@
 \usepackage{lmodern}
 \usepackage{fourier}
 \usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray},
+  stringstyle=\color{teal},
+  frame=single,
+  breaklines=true,
+  showstringspaces=false
+}
 
 \captionsetup[figure]{name=Abb.}
 
@@ -40,10 +52,10 @@
 \begin{itemize}
 \item \textbf{DBS} = Datenbank (DB) \& Datenbankmanagementsystem (DBMS)
 \begin{itemize}
-\item Datenbank: Sammlung verknüpfter, persistenter Daten (z. B. Uni mit Studierenden, Kursen usw.)
-\item DBMS: Software zur Speicherung, Verwaltung \& Zugriff auf diese Daten
+\item \textbf{Datenbank:} Sammlung verknüpfter, persistenter Daten (z. B. Uni mit Studierenden, Kursen usw.)
+\item \textbf{DBMS:} Software zur Speicherung, Verwaltung \& Zugriff auf diese Daten
 \end{itemize}
-\item Zweck: Einheitliche Verwaltung, Zugriff, Integrität, Sicherheit, Transaktionen, Wiederherstellung
+\item \textbf{Zweck:} Einheitliche Verwaltung, Zugriff, Integrität, Sicherheit, Transaktionen, Wiederherstellung
 \end{itemize}
 \end{minipage}
 \hfill
@@ -73,14 +85,14 @@
 \begin{itemize}
 \item Drei Ebenen:
 \begin{enumerate}
-\item physical level: Spreicherung \& Strukturen
-\item logical level: Datenmodell, Entities \& Beziehungen
-\item view level: Benutzer- \& Anwendungssicht
+\item \textbf{physical level:} Spreicherung \& Strukturen
+\item \textbf{logical level:} Datenmodell, Entities \& Beziehungen
+\item \textbf{view level:} Benutzer- \& Anwendungssicht
 \end{enumerate}
-\item Ziel: Abstraktion \& Datenunabhängigkeit
+\item \textbf{Ziel:} Abstraktion \& Datenunabhängigkeit
 \begin{itemize}
-\item Physische Datenunabhängigkeit: Speicher ändern ohne Logikänderung
-\item Logische Datenunabhängigkeit: Logik ändern ohne Anwendungscode anzupassen
+\item \textbf{Physische Datenunabhängigkeit:} Speicher ändern ohne Logikänderung
+\item \textbf{Logische Datenunabhängigkeit:} Logik ändern ohne Anwendungscode anzupassen
 \end{itemize}
 \end{itemize}
 
@@ -154,5 +166,137 @@ Zugriff \& Veränderung der Daten (z.B. SELECT, INSERT)
 \caption{3-schichtige Architektur}
 \end{minipage}
 \end{figure}
+
+\section{Relationales Modell}
+
+\subsection{Grundlagen}
+
+\begin{itemize}
+\item Erfinder: Edgar F. Codd (IBM, 1970), Turing Award 1981
+\item Bedeutung: Grundlage fast aller modernen Datenbanksysteme (z. B. Oracle, MySQL, PostgreSQL)
+\item Kernidee: Daten in Relationen (Tabellen) gespeichert, mit starker mathematischer Basis
+\end{itemize}
+
+\subsection{Zentrale Begriffe}
+
+\begin{itemize}
+\item \textbf{Domäne:} Wertebereich eines Attributs (Zahl, Farbe, String, Datum, usw.)
+\item \textbf{Kartesisches Produkt:} Kombination aller möglichen Werte aus Menge
+\item \textbf{Relation:} Menge von n-Tupeln, Teilmenge vom kartesischem Produkt
+\item \textbf{Attribut:} Spalte einer Relation
+\item \textbf{Grad (Stelligkeit):} Anzahl der Attribute
+\item \textbf{Kardinalität:} Anzahl an Tupeln der Relation
+\item \textbf{Wichtiges:} Reihenfolge egal, aber keine Duplikate erlaubt
+\end{itemize}
+
+\subsection{Relationen- \& Datenbankschema}
+
+\begin{itemize}
+\item \textbf{Relationsschema:} legt Struktur der Relation fest \\
+$\rightarrow$ z.B. Student(StudId: number, StudName: string, Major: string)
+\item \textbf{Instanz eines Datenbankschemas/Relationeninstanz r(R):} Sammlung von Relationen
+\item \textbf{Geordnetes Schema:} Position der Attribute relevant
+\item \textbf{Ungeordnetes Schema:} Attribute über Namen referenziert
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.55]{pictures/bspRelationsinstanz.png}
+\caption{Beispiel einer Relationsinstanz}
+\end{figure}
+
+\subsection{Integritätsbedingungen}
+
+Stellt Korrektheit, Konsisten \& Gültigkeit der Daten sicher:
+\begin{itemize}
+\item \textbf{Primärschlüssel:} Eindeutiger Identifikator für jedes Tupel
+\item \textbf{Fremdschlüssel:} Verweist auf Primärschlüssel einer anderen Relation
+\item \textbf{Eindeutigkeit (UNIQUE)} \& \textbf{NOT NULL}
+\item \textbf{Referenzielle Integrität:} Keine defekten Verweise (Fremdschlüssel muss existieren oder NULL sein)
+\end{itemize}
+
+\textbf{$\Rightarrow$ Muss unbedingt für jede Instanz eines Relationsschemas erfüllt sein:}
+\begin{itemize}
+\item bei Definition des Schemas angegeben
+\item vom DBMS bei Änderungen an Relationen überprüft
+\end{itemize}
+
+\subsection{Schlüsseltypen}
+
+\begin{itemize}
+\item \textbf{Schlüssel $R(S \subseteq R)$:} eindeutig \& minimal
+\item \textbf{Superschlüssel $S \subseteq R$:} eindeutig, aber nicht minimal
+\item \textbf{zsmgesetzter Schlüssel:} Kombination mehrerer Attribute
+\item \textbf{Kanditatenschlüssel:} mögliche Schlüssel
+\item \textbf{Primärschlüssel:} ausgewählter Kandidatenschlüssel
+\item \textbf{Fremdschlüssel:} verweist auf Primärschlüssel referenzierter Relation
+\end{itemize}
+
+\begin{figure}[H]
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\includegraphics[scale=0.4]{pictures/sd1.png}
+\caption{Tupel in A ohne Partner in B unzulässig}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.5\textwidth}
+\centering
+\includegraphics[scale=0.4]{pictures/sd2.png}
+\caption{Löschen von Tupel in B nicht möglich, wenn referenziert}
+\end{minipage}
+\end{figure}
+
+\subsection{SQL Data Definition Language (DDL)}
+
+\textbf{Definiert Relationen \& Integritätsbedingungen:}
+\begin{lstlisting}[language = SQL]
+CREATE TABLE Student (
+  StudId INTEGER PRIMARY KEY,
+  StudName VARCHAR(50) NOT NULL,
+  Major VARCHAR(50)
+);
+\end{lstlisting}
+
+\subsubsection{Grundlegende Datentypen}
+
+\begin{itemize}
+\item \textcolor{blue}{INTEGER} (auch: \textcolor{blue}{INTEGER4}, \textcolor{blue}{INT})
+\item \textcolor{blue}{SMALLINT} (auch: \textcolor{blue}{INTEGER2})
+\item \textcolor{blue}{FLOAT} und \textcolor{blue}{DOUBLE}
+\item \textcolor{blue}{DECIMAL(p,q)} und \textcolor{blue}{NUMERIC(p,q)} mit $p$ = Gesamtanzahl der Stellen und $q$ = Anzahl der Nachkommastellen
+\item \textcolor{blue}{CHARACTER(n)}, \textcolor{blue}{CHAR(n)} – Zeichenketten fester Länge $n$
+\item \textcolor{blue}{VARCHAR(n)} – Zeichenketten variabler Länge (bis maximal $n$)
+\item \textcolor{blue}{DATE}, \textcolor{blue}{TIME}, \textcolor{blue}{TIMESTAMP} – für Datums- und Zeitangaben
+\end{itemize}
+
+\subsubsection{Wichtige SQL-Constraints}
+
+\begin{itemize}
+\item  \textcolor{blue}{PRIMARY KEY}: zsmgesetzter Primärschlüssel ($A_1, A_2, ...$) 
+\item \textcolor{blue}{UNIQUE}: zsmgesetzter Kandidatenschlüssel ($A_1, A_2, ...$) 
+\item \textcolor{blue}{NOT NULL}: Attributwert undefiniert unzulässig
+\item \textcolor{blue}{DEFAULT} $w_1$: $w_1$ als Standard genutzt 
+\item \textcolor{blue}{CHECK} f: überprüft bei jedem Einfügen Formel f
+\item \textcolor{blue}{REFERENCES} $t_1(a_1)$: Verweis Attribut $a_1$ auf Tabelle $t_1$
+\item Beispiel für Fremdschlüssel:
+\begin{lstlisting}[language = SQL]
+FOREIGN KEY (courseId, semester) REFERENCES Course
+\end{lstlisting}
+\item \textcolor{blue}{ON DELETE CASCADE}: \\
+Löschen eines Tupels in B führt zum Löschen aller referenzierenden Tupel in A
+\item \textcolor{blue}{ON UPDATE CASCADE}: \\
+Änderung eines Tupels in B führt zur automatischen Änderung der referenzierenden Tupel in A
+\item \textcolor{blue}{ON DELETE SET NULL}: \\
+\glqq Herrenlose Referenzen\grqq ~in A werden auf \textcolor{blue}{NULL} gesetzt
+\end{itemize}
+
+\subsubsection{Änderung an Tabellen}
+
+\begin{itemize}
+\item \textcolor{blue}{DROP TABLE} t1: löscht Tabelle
+\item \textcolor{blue}{ALTER TABLE} ... \textcolor{blue}{ADD}: fügt Attribut hinzu
+\item \textcolor{blue}{ALTER TABLE} ... \textcolor{blue}{DROP}: entfernt Attribut
+\item \textcolor{blue}{ALTER TABLE} ... \textcolor{blue}{MODIFY}: ändert Attributdefinition
+\end{itemize}
 
 \end{document}
