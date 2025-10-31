@@ -72,7 +72,7 @@
 \begin{itemize}
 \item einheitliche Datenintegration
 \item effizienter Zugriff über Datenbanksprachen
-\item Metdatenkatalog
+\item Metadatenkatalog
 \item versch. Benutzer-/Anwendungssichten
 \item Integritätsbedingungen von DBMS sichergestellt
 \item Sicherheitsmechanismen für Schutz der Daten
@@ -124,7 +124,7 @@
 \subsection{Datenbanksprachen}
 
 \begin{itemize}
-\item \textbf{DDL (Data Definition Language:} \\
+\item \textbf{DDL (Data Definition Language):} \\
 definiert Schemata \& Metadaten (z.B. CREATE TABLE)
 \item \textbf{DML (Data Manipulation Language):} \\
 Zugriff \& Veränderung der Daten (z.B. SELECT, INSERT)
@@ -140,7 +140,7 @@ Zugriff \& Veränderung der Daten (z.B. SELECT, INSERT)
 \item basiert auf Client-Server-Modell
 \item Trennung der Funktionalitäten einer Anwendung:
 \begin{itemize}
-\item Benutzeroberfläche und Interaktion
+\item Benutzeroberfläche \& Interaktion
 \item Anwendungslogik (Business Logic)
 \item Datenverwaltungsfunktionalität (Speicherung, Verwaltung, Zugriff)
 \end{itemize}
@@ -207,9 +207,9 @@ $\rightarrow$ z.B. Student(StudId: number, StudName: string, Major: string)
 
 \subsection{Integritätsbedingungen}
 
-Stellt Korrektheit, Konsisten \& Gültigkeit der Daten sicher:
+Stellt Korrektheit, Konsistenz \& Gültigkeit der Daten sicher:
 \begin{itemize}
-\item \textbf{Primärschlüssel:} Eindeutiger Identifikator für jedes Tupel
+\item \textbf{Primärschlüssel:} Eindeutiger Identifier für jedes Tupel
 \item \textbf{Fremdschlüssel:} Verweist auf Primärschlüssel einer anderen Relation
 \item \textbf{Eindeutigkeit (UNIQUE)} \& \textbf{NOT NULL}
 \item \textbf{Referenzielle Integrität:} Keine defekten Verweise (Fremdschlüssel muss existieren oder NULL sein)
@@ -298,5 +298,142 @@ Löschen eines Tupels in B führt zum Löschen aller referenzierenden Tupel in A
 \item \textcolor{blue}{ALTER TABLE} ... \textcolor{blue}{DROP}: entfernt Attribut
 \item \textcolor{blue}{ALTER TABLE} ... \textcolor{blue}{MODIFY}: ändert Attributdefinition
 \end{itemize}
+
+\section{Relationale Algebra}
+
+\subsection{Anfragesprachen}
+
+\begin{itemize}
+\item Anfragesprache (QL) ermöglicht Daten aus Datenbank auszulesen \& manipulieren
+\item relationale Algebra $\rightarrow$ prozedural (SQL)
+\item relationales Kalkül $\rightarrow$ deklarativ (QBE, Query-By-Example)
+\end{itemize}
+
+\subsection{Basisoperationen der relationalen Algebra}
+
+\textbf{Unäre Operatoren}
+\begin{itemize}
+\item Selektion $\sigma_P(r)$: filtert Tupel nach Bedingung \\
+r $\rightarrow$ Relation (Name) \\
+P $\rightarrow$ Formel der Aussagenlogik: <Attribut> = <Attribut> oder <Konstante>
+\item Projektion $\pi_{A_1,...,A_k}(r)$: wählt Spalte aus, entfernt Duplikate \\
+$A_1,...,A_k$ $\rightarrow$ Attribute \\
+Kardinalität: $\mid \pi_{A_1,...,A_k}(r) \mid \ll \mid r \mid$
+\item Umbenennung $\phi$: benennt Relationen oder Attribute um \\
+$phi_x(E)$ $\rightarrow$ Ausdruck E unter neuem Namen x
+\end{itemize}
+
+\noindent
+\textbf{Binäre Operatoren}
+\begin{itemize}
+\item Vereinigung $\cup$: Tupel aus beiden Relationen
+\item Differenz $-$: wie das logische \glqq Ohne\grqq zu verstehen
+\item Kartesisches Produkt $\times$: Kombi von Tupeln aus r \& s
+\end{itemize}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.33\textwidth}
+\centering
+\includegraphics[scale=.25]{pictures/verein.png}
+\caption{Vereinigung}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.33\textwidth}
+\centering
+\includegraphics[scale=.25]{pictures/diff.png}
+\caption{Differenz}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.33\textwidth}
+\centering
+\includegraphics[scale=.25]{pictures/kat.png}
+\caption{Kartesiches Produkt}
+\end{minipage}
+\end{figure}
+
+\subsection{Zusätzliche Operatoren}
+
+
+\begin{itemize}
+\item Schnittmenge $\cap$: gemeinsame Tupel beider Relationen
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.3]{pictures/schnitt.png}
+\end{figure}
+\item Division $\div$: für \glqq für alle\grqq -Anfragen
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.3]{pictures/div.png}
+\end{figure}
+\item natürlicher Verbund (Join) $\bowtie$: verbindet Relationen über gleiche Attribute
+\begin{figure}[H]
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/join1.png}
+\caption{Equi-Verbund (Join) mit selben Attribut}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[scale=.35]{pictures/join2.png}
+\caption{Join ohne selbem Attribut}
+\end{minipage}
+\end{figure}
+\item Theta-Verbung $\bowtie_C$: verbindet Relationen nach beliebiger Bedingung
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.35]{pictures/theta.png}
+\end{figure}
+\newpage
+\item Outer-Joins: behalten auch Tupel ohne Partner
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/fullouter.png}
+\caption{Full-Outer Join}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/leftrightouter.png}
+\caption{Left- \& Right-Outer Join}
+\end{minipage}
+\end{figure}
+\end{itemize}
+
+\subsection{Gruppierung \& Aggregation}
+
+\begin{itemize}
+\item Gruppierung: Gruppieren von Tupeln nach gemeinsamen Attributwerten
+\item Aggregation: Anwenden einer Funktion auf jede Gruppe (z. B. count, avg, sum, min, max)
+\item Notation :$\gamma_{A_1,...A_n;F_1,...F_n}(r)$ \\
+$A_i \rightarrow$ Attribut \\
+$F_I \rightarrow$ Aggregatfunktion
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/gruppaggr.png}
+\caption{Beispielanfrage}
+\end{figure}
+
+\subsection{Graphische Darstellung relationaler Algebra-Ausdrücke}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item Darstellung als Baum
+\item Knoten = Operatoren (Ausdrücke)
+\item Kanten = Datenfluss (Relationen)
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\vspace{-10mm}
+\adjustbox{valign=c}{\includegraphics[scale=.3]{pictures/grafalg.png}}
+\caption{Beispieldarstellung}
+\end{minipage}
+\end{figure}
 
 \end{document}
