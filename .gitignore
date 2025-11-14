@@ -328,3 +328,4 @@ TSWLatexianTemp*
 # user do not lol
 *.pdf
 pictures/
+*.gz

@@ -552,5 +552,241 @@ $F_I \rightarrow$ Aggregatfunktion
 \caption{Beispieldialog in QBE}
 \end{figure}
 
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/qbe1.png}
+\caption{Abfragen mit Bedingungen}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/qbe2.png}
+\caption{Join-Abfragen in QBE}
+\end{minipage}
+\\[1em]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/qbe3.png}
+\caption{QBE-Abfragen mit Ungleichungen}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/qbe4.png}
+\caption{Abfrage mit Negation}
+\end{minipage}
+\\[1em]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/qbe5.png}
+\caption{Einfügungen}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/qbe6.png}
+\caption{Löschungen \& Aktualisierungen}
+\end{minipage}
+\\[1em]
+\centering
+\includegraphics[scale=.3]{pictures/qbe7.png}
+\caption{Realisierung QBE-Abfrage ohne Negation}
+\end{figure}
+
+\newpage
+
+\section{SQL}
+
+\textbf{basiert auf Mengen- \& relationalen Operatoren mit Modifikationen \& Erweiterungen}
+
+\subsection{Grundsruktur einer SQL-Abfrage}
+
+\begin{lstlisting}[language = SQL]
+SELECT A1, A2, ... -- Projektion
+  FROM R1, R2, ... -- Kreuzprodukt
+ WHERE Bedingung -- Selektion
+\end{lstlisting}
+
+\subsection{Basisbestandteile}
+
+\textbf{\textcolor{blue}{SELECT}}
+\begin{itemize}
+\item listet Attribute bzw. Ausdrücke
+\item \texttt{*} gibt alle Attribute aus
+\item \texttt{\textcolor{blue}{DISTINCT}} entfernt Duplikate
+\item Ausdrücke möglich (\texttt{\textcolor{blue}{CAST}...\textcolor{blue}{AS}}, \texttt{\textcolor{blue}{REPLACE}})
+\item Alias mit \texttt{\textcolor{blue}{AS}}
+\end{itemize}
+
+\noindent
+\textbf{\textcolor{blue}{FROM}}
+\begin{itemize}
+\item enthält Relationen
+\item mehrere Relationen $\rightarrow$ kartesisches Produkt
+\item gleiche Attributnamen: Quali nötig (z.B. \texttt{R.A} \& \texttt{S:A})
+\item Selbst-Joins möglich
+\end{itemize}
+
+\noindent
+\textbf{\textcolor{blue}{WHERE}}
+\begin{itemize}
+\item filtert Tupel durch Prädikate
+\item Vergleichsoperatoren: =, <, >, <=, >=, <>
+\item NULL-checks: \texttt{IS NULL}, \texttt{IS NOT NULL}
+\item Logik: AND, OR, NOT
+\end{itemize}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.5]{pictures/db1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.35]{pictures/db2.png}
+\end{minipage}
+\caption{Datenbank- \& Relationenschema}
+\end{figure}
+
+\noindent
+\textbf{Beispielabfrage mit SQL}
+\begin{lstlisting}[language = SQL]
+SELECT Kontaktname, CAST(REPLACE("Telefon",'-','') AS INT) AS "NUMMER"
+  FROM LIEFERANTEN;
+\end{lstlisting}
+
+$\Rightarrow$ Ausgegeben werden die Kontaktnamen \& Telefonnummern.
+
+\subsection{NULL-Werte}
+
+\begin{itemize}
+\item NULL = unbekannt/nicht vorhanden
+\item Rechenoperatoren mit NULL $\rightarrow$ NULL
+\item Logik folgt TRUE/FALSE/NULL
+\item Aggregatfunktionen ignorieren \texttt{\textcolor{blue}{NULL}} außer \texttt{\textcolor{blue}{COUNT}(*)}
+\end{itemize}
+
+\subsection{Joins}
+
+\begin{itemize}
+\item über Bedingungen formuliert oder explizite JOIN-Operatoren
+\item Arten:
+\begin{itemize}
+\item INNER JOIN
+\item LEFT/RIGHT OUTER JOIN
+\item FULL OUTER JOIN
+\item NATURAL JOIN/JOIN USING
+\end{itemize}
+\item Special: FULL OUTER JOIN kann simuliert werden mit:
+\begin{lstlisting}[language = SQL]
+SELECT ... FROM A LEFT JOIN B ...
+UNION
+SELECT ... FROM A RIGHT JOIN B ...
+\end{lstlisting}
+\end{itemize}
+
+\noindent
+Typische Anwendungen:
+\begin{itemize}
+\item Kunden + Bestellungen
+\item Produkte + Angebote
+\item Selbst-Joins (z.B. Kunden in gleicher Stadt)
+\end{itemize}
+
+\subsection{Mengenoperationen}
+
+\begin{itemize}
+\item \texttt{\textcolor{blue}{UNION}} ($\cap$, ohne Duplikate)
+\item \texttt{\textcolor{blue}{UNION ALL}} (mit Duplikaten)
+\item \texttt{\textcolor{blue}{INTERSECT}} ($\cup$)
+\item \texttt{\textcolor{blue}{EXCEPT}} ($-$, wie das logische Ohne)
+\item Anforderungen:
+\begin{enumerate}
+\item gleiche Anzahl an Spalten
+\item kompatible Datentypen
+\end{enumerate}
+\end{itemize}
+
+\subsection{ORDER BY \& Sortierung}
+
+\begin{itemize}
+\item \texttt{\textcolor{blue}{ASC}} Standard \& \texttt{\textcolor{blue}{DESC}}
+\item mehrere Sortierschlüssel möglich
+\item Umgang mit \texttt{\textcolor{blue}{NULL}}:
+\begin{itemize}
+\item MySQL: \texttt{\textcolor{blue}{NULLS FIRST}}
+\item PostgreSQL/DuckDB: \texttt{\textcolor{blue}{NULLS LAST}}
+\end{itemize}
+\end{itemize}
+
+\subsection{Aggregation \& GROUP BY}
+
+\textbf{Aggregatfunktionen:} \\
+\texttt{\textcolor{blue}{SUM}}, \texttt{\textcolor{blue}{COUNT}}, \texttt{\textcolor{blue}{AVG}}, \texttt{\textcolor{blue}{MIN}}, \texttt{\textcolor{blue}{MAX}}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/sqlaus.png}
+\caption{SQL-Ausführungsreihenfolge}
+\end{figure}
+
+\noindent
+\textbf{ACHTUNG:} Attribute in \texttt{\textcolor{blue}{SELECT}} ohne Aggregat müssen in \texttt{\textcolor{blue}{GROUP BY}} stehen \& \texttt{\textcolor{blue}{HAVING}} filtert Gruppen, nicht einzelne Tupel. \\
+Mit \texttt{\textcolor{blue}{LIMIT}} kann die Ausgabe auf eine bestimmte Anzahl n reduziert werden (z.B. Top 3 Käufer mit den meisten Bestellungen).
+
+\subsection{Subqueries (Unterabfragen)}
+
+\textbf{Arten:}
+\begin{itemize}
+\item korreliert (bezieht sich auf äußere Abfrage)
+\item unkorreliert
+\end{itemize}
+
+\noindent
+\textbf{Nutzen}
+\begin{itemize}
+\item Vergleiche mit Standardwerten (z.B. durchschnittlicher Bestellwert)
+\item Mengenvergleiche:
+\begin{itemize}
+\item \texttt{\textcolor{blue}{IN}}: Ausgabe der Datensätze aus Hauptanfrage im Ergebnis der Unterabfrage
+\item \texttt{\textcolor{blue}{NOT IN}}: nicht im Ergebnis der Unterabfrage
+\item \texttt{\textcolor{blue}{ANY}}: wenn min. eins zu \texttt{\textcolor{blue}{TRUE}} evaluiert
+\item \texttt{\textcolor{blue}{ALL}}: \texttt{\textcolor{blue}{TRUE}} wenn alle Werte Bedingung erfüllen
+\item \texttt{\textcolor{blue}{EXISTS}}: \texttt{\textcolor{blue}{TRUE}} wenn Unterabfrage min 1 Datensatz liefert
+\item \texttt{\textcolor{blue}{NOT EXISTS}}: \texttt{\textcolor{blue}{TRUE}} wenn keine Datensätze liefert
+\end{itemize}
+\end{itemize}
+
+\newpage
+
+Beispiele:
+\begin{itemize}
+\item Kunden ohne Bestellung (NOT EXISTS)
+\item Produkte günstiger als jedes Getränl (ALL)
+\item Kunden mit hoher Bestellung (> 500) (IN)
+\end{itemize}
+
+\subsection{Änderung an der Datenbank}
+
+\begin{lstlisting}[language = SQL]
+DELETE FROM Kunden WHERE ...
+\end{lstlisting}
+\noindent
+\textbf{Wichtig:} Unterabfragen werden einmal evaluiert, bevor die Löschaktion ausgeführt wird. \\
+\\
+\noindent
+\textbf{\texttt{\textcolor{blue}{INSERT}}}
+\begin{itemize}
+\item mit oder ohne explizite Attributliste
+\item mehrere Werte möglich
+\end{itemize}
+\noindent
+\textbf{\texttt{\textcolor{blue}{UPDATE}}}
+\begin{itemize}
+\item einzelnes Attribut oder mehrere ändern
+\item Wert kann auch aus Subquery stammen
+\end{itemize}
 
 \end{document}
