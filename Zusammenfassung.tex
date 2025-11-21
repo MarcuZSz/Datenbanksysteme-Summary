@@ -23,7 +23,18 @@
   stringstyle=\color{teal},
   frame=single,
   breaklines=true,
-  showstringspaces=false
+  showstringspaces=false,
+  extendedchars=true,
+  literate=
+    {ä}{{\"a}}1
+    {ö}{{\"o}}1
+    {ü}{{\"u}}1
+    {Ä}{{\"A}}1
+    {Ö}{{\"O}}1
+    {Ü}{{\"U}}1
+    {ß}{{\ss}}1
+    {ã}{{\~a}}1
+    {é}{{\'e}}1
 }
 
 \captionsetup[figure]{name=Abb.}
@@ -788,5 +799,359 @@ DELETE FROM Kunden WHERE ...
 \item einzelnes Attribut oder mehrere ändern
 \item Wert kann auch aus Subquery stammen
 \end{itemize}
+
+\section{Fortgeschrittenes SQL}
+
+\subsection{Zeichenkettenverarbeitung}
+
+\textbf{LIKE}
+\begin{itemize}
+\item \texttt{\%}: beliebig viele Zeichen
+\item \texttt{\_}: genau ein Zeichen
+\end{itemize}
+
+\begin{lstlisting}[language=SQL]
+-- Unternehmen, deren Name die Zeichenfolge 'Trader' enthält
+SELECT * FROM LIEFERANTEN WHERE Firmenname LIKE '%Trader%';
+
+-- Unternehmen, deren Name mit 'T' beginnt
+SELECT * FROM LIEFERANTEN WHERE Firmenname LIKE 'T%';
+
+-- Unternehmen, deren Name mit 's' endet
+SELECT * FROM LIEFERANTEN WHERE Firmenname LIKE '%s';
+
+-- Unternehmen, die in Sao Paulo bzw. z.B. São Paulo ansässig sind
+SELECT * FROM LIEFERANTEN WHERE Stadt LIKE 'S_o Paulo';
+\end{lstlisting}
+
+\noindent
+\textbf{Regex (z.B. DuckDB)}
+\begin{itemize}
+\item \texttt{\textcolor{blue}{REGEX\_MATCH}} prüft Muster in Strings
+\item \texttt{\textcolor{blue}{REGEXP\_REPLACE}} ersetzt Muster, z.B. alle Nicht-Ziffern
+\end{itemize}
+
+\begin{lstlisting}[language=SQL]
+-- Kunden auswählen, deren Adresse keine Zahl (z.B. Hausnummer) enthält
+SELECT * FROM KUNDEN WHERE NOT REGEX_MATCH(Adresse, '\d+');
+
+-- Kundenadressen so umwandeln, dass sie nur noch Zahlen enthalten
+SELECT REGEXP_REPLACE(Adresse, '[^\d]', '*', 'g') FROM KUNDEN;
+\end{lstlisting}
+
+\subsection{String-Aggregation}
+
+\texttt{\textcolor{blue}{string\_agg}} verkettet Strings mit Trennzeichen
+
+\begin{lstlisting}[language=SQL]
+SELECT string_agg("E-mail", ', ') AS distribution_list FROM sample.KUNDEN;
+\end{lstlisting}
+
+\subsection{Pivotierung}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/pivot.png}
+\caption{Spalten in Zeilen transformieren (andersrum geht auch)}
+\end{figure}
+
+\textbf{\textcolor{blue}{FILTER}} in Aggregaten
+\begin{lstlisting}[language=SQL]
+SELECT Land, SUM(Bevoelkerung) FILTER (WHERE Jahr = 2000) "2000",
+             SUM(Bevoelkerung) FILTER (WHERE Jahr = 2010) "2010",
+             SUM(Bevoelkerung) FILTER (WHERE Jahr = 2020) "2020"
+FROM Städte
+GROUP BY Land;
+\end{lstlisting}
+
+\noindent
+\textbf{\textcolor{blue}{CASE WHEN}} 
+\begin{lstlisting}[language=SQL]
+SELECT Land, SUM(CASE WHEN Jahr = 2000 THEN Bevoelkerung END) AS "2000",
+             SUM(CASE WHEN Jahr = 2010 THEN Bevoelkerung END) AS "2010",
+             SUM(CASE WHEN Jahr = 2020 THEN Bevoelkerung END) AS "2020"
+FROM Städte
+GROUP BY Land;
+\end{lstlisting}
+
+\noindent
+\textbf{\textcolor{blue}{PIVOT}} (z.B. DuckDB)
+\begin{lstlisting}[language=SQL]
+SELECT * FROM (
+    PIVOT Städte ON Jahr USING SUM(Bevoelkerung) GROUP BY Land
+) pivot_alias;
+\end{lstlisting}
+
+\subsection{CTEs \& Sichten}
+
+\subsubsection{CTEs (Common Table Expressions)}
+
+\begin{itemize}
+\item tempräre benannte Zwischentabellen innerhalb einer Abfrage
+\item Syntax
+\begin{lstlisting}[language=SQL]
+WITH <abfrage-name> [(<spaltenliste>)] AS ( <abfrageausdruck> )
+\end{lstlisting}
+\item erhöht Lesbarkeit komplexer Queries
+\end{itemize}
+
+\noindent
+\textbf{CTE Beispiele}
+\begin{lstlisting}[language=SQL]
+-- ohne WITH-Klausel
+SELECT * FROM PRODUKTE WHERE PreisProEinheit <= (
+  SELECT AVG(PreisProEinheit) * 1.1 FROM PRODUKTE)
+AND PreisProEinheit >= (
+  SELECT AVG(PreisProEinheit) * 0.9 FROM PRODUKTE);
+ 
+-- mit WITH-Klausel 
+WITH AVERAGE(AvgPrice) AS (SELECT AVG(PreisProEinheit) FROM sample.PRODUKTE)
+SELECT P.* FROM sample.PRODUKTE P, AVERAGE
+  WHERE P.PreisProEinheit <= 1.1 * AvgPrice AND P.PreisProEinheit >= 0.9 * AvgPrice;
+  
+-- Finde die Top 5 Kunden nach Gesamtausgaben für Bestellungen
+WITH CustomerTotalSpending AS (
+    SELECT K.K_ID, K.Name, SUM(B.Gesamtbetrag) AS Gesamtbetrag
+      FROM sample.KUNDEN K JOIN sample.BESTELLUNGEN B ON K.K_ID = B.K_ID
+     GROUP BY K.K_ID, K.Name
+)
+SELECT K_ID, Name, Gesamtbetrag
+  FROM CustomerTotalSpending
+ ORDER BY Gesamtbetrag DESC
+ LIMIT 5;
+\end{lstlisting}
+
+\subsubsection{Views (Sichten)}
+
+\begin{itemize}
+\item dauerhafte virtuelle Tabellen
+\item Nutzen: Abstrkation, Wiederverwendung \& Sicherheit
+\end{itemize}
+
+\noindent
+\textbf{Definition der Sicht (DDL-Befehl)}
+\begin{lstlisting}[language=SQL]
+CREATE VIEW OrderDetailsView AS
+SELECT B.B_ID, B.Bestelldatum, B.Gesamtbetrag,
+      K.Name AS KundenName, K."E-Mail" AS KundenEmail,
+      L.Firmenname AS LieferantenName, L.Kontaktperson AS LieferantenKontakt
+FROM BESTELLUNGEN B JOIN KUNDEN K ON B.K_ID = K.K_ID JOIN LIEFERANTEN L ON B.L_ID =
+    L.L_ID;
+\end{lstlisting}
+
+\noindent
+\textbf{Verwendung der Sicht über ihren Namen}
+\begin{lstlisting}[language=SQL]
+SELECT B_ID, Bestelldatum, KundenName, LieferantenName, Gesamtbetrag
+FROM OrderDetailsView
+WHERE Gesamtbetrag > 500
+ORDER BY Bestelldatum DESC;
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/ctesvssichten.png}
+\caption{Vergleich: CTEs vs Sichten}
+\end{figure}
+
+\subsection{Rekursive Anfragen}
+
+\textbf{Anwendungen}
+\begin{itemize}
+\item Graphen, Flugverbindungen, Transitive Hülle
+\item Baumstrukturen
+\item Fibonacci-Zahlen
+\end{itemize}
+
+\noindent
+\textbf{Grundstruktur}
+\begin{lstlisting}[language=SQL]
+WITH RECURSIVE R AS (
+  -- Basis
+  SELECT ...
+  UNION ALL
+  -- Rekursiver Schritt
+  SELECT ... FROM R ...
+)
+SELECT * FROM R;
+\end{lstlisting}
+
+\noindent
+\textbf{Sicherheitsmechanismen}
+\begin{itemize}
+\item Begrenzung der Rekursionstiefe
+\item Zykluserkennung (\textcolor{blue}{CYCLE}-Klausel)
+\end{itemize}
+
+\begin{lstlisting}[language=SQL]
+WITH RECURSIVE TRIP(ABFLUG, ANKUNFT, VERBINDUNG) AS (
+    SELECT ABFLUG, ANKUNFT, ABFLUG || '-' || ANKUNFT AS Con
+      FROM FLÜGE
+     WHERE ABFLUG = 'FRA'
+        UNION ALL
+     SELECT T.ABFLUG, F.ANKUNFT, T.VERBINDUNG || '-' || F.ANKUNFT AS Con
+       FROM TRIP T, FLÜGE F
+      WHERE T.ANKUNFT = F.ABFLUG
+) CYCLE ANKUNFT SET FoundCycle TO TRUE DEFAULT FALSE USING cycle_path
+SELECT * FROM TRIP;
+\end{lstlisting}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.45]{pictures/cyc.png}
+\caption{Sicherheit durch Zykluserkennung}
+\end{figure}
+
+\subsection{Baum- \& Graphtraversierungen}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/baum.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/graph.png}
+\end{minipage}
+\caption{Traversierungen durch den Baum \& Graph}
+\end{figure}
+
+Mit rekursiven CTEs lassen sich:
+\begin{itemize}
+\item vollständige Pfade erzeugen
+\item Zyklen vermeiden
+\item \glqq visited nodes\grqq ~tracken
+\end{itemize}
+
+\noindent
+\textbf{Gib alle Pfade zurück, die bei Knoten 1 beginnen}
+\begin{lstlisting}[language=SQL]
+WITH RECURSIVE paths(startNode, endNode, path) AS (
+   -- definiere den Pfad als die erste Kante der Traversierung
+   SELECT node1id AS startNode, node2id AS endNode, [node1id, node2id] AS path
+     FROM edges
+     WHERE startNode = 1
+   UNION ALL
+   -- neue Kante an den Pfad anhängen
+   SELECT paths.startNode AS startNode, node2id AS endNode,
+         array_append(path, node2id) AS path
+     FROM paths JOIN edges ON paths.endNode = node1id
+     -- Verhindert das Hinzufügen eines bereits enthaltenen Knotens (stellt Zyklenfreiheit sicher)
+     WHERE node2id != ALL(paths.path)
+)
+SELECT startNode, endNode, path FROM paths ORDER BY length(path), path;
+\end{lstlisting}
+
+\newpage
+\noindent
+\textbf{Gib ungewichtete kürzeste Pfade zurück, die bei Knoten 1 beginnen}
+\begin{lstlisting}[language=SQL]
+WITH RECURSIVE paths(startNode, endNode, path) AS (
+     -- definiert den Pfad als die erste Kante der Traversierung
+   SELECT node1id AS startNode, node2id AS endNode, [node1id, node2id] AS path
+     FROM edges WHERE startNode = 1
+   UNION ALL
+   -- neue Kante an den Pfad anhängen
+   SELECT paths.startNode AS startNode, node2id AS endNode,
+          array_append(path, node2id) AS path
+     FROM paths JOIN edges ON paths.endNode = node1id
+    -- Verhindert das Hinzufügen eines Knotens, der bereits von einem Pfad besucht wurde.
+    -- Dadurch wird sichergestellt, dass (1) keine Zyklen auftreten und
+    -- (2) nur Knoten hinzugefügt werden, die nicht von früheren (kürzeren) Pfaden besucht wurden.
+    WHERE NOT EXISTS (SELECT 1
+                      FROM paths previous_paths
+                      WHERE list_contains(previous_paths.path, node2id))
+)
+SELECT startNode, endNode, path FROM paths ORDER BY length(path), path;
+\end{lstlisting}
+
+\subsection{Window Funktionen}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.6]{pictures/wf.png}
+\caption{Grundprinzip von Window-Funktionen}
+\end{figure}
+
+\noindent
+\textbf{Wichtige Konzepte}
+\begin{itemize}
+\item current row
+\item Fenster-Frame
+\item ROWS (positionsbasiert)
+\item RANGE (wertbasiert, basiert auf Gleichheit oder Distanz im Sortierattribut)
+\end{itemize}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.25]{pictures/rows1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.25]{pictures/rows2.png}
+\end{minipage}
+\\[1em]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.25]{pictures/rows3.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.25]{pictures/rows4.png}
+\end{minipage}
+\centering
+\includegraphics[scale=.3]{pictures/rows5.png}
+\caption{ROWS-Beispiele}
+\end{figure}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.25]{pictures/range1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/range2.png}
+\end{minipage}
+\\[1em]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/range3.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/range4.png}
+\end{minipage}
+\caption{RANGE-Beispiel}
+\end{figure}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/groups1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/groups2.png}
+\end{minipage}
+\\[1em]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/groups3.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/groups4.png}
+\end{minipage}
+\caption{GROUPS-Beispiele}
+\end{figure}
 
 \end{document}
