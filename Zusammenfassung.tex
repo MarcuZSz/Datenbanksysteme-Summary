@@ -332,7 +332,7 @@ P $\rightarrow$ Formel der Aussagenlogik: <Attribut> = <Attribut> oder <Konstant
 $A_1,...,A_k$ $\rightarrow$ Attribute \\
 Kardinalität: $\mid \pi_{A_1,...,A_k}(r) \mid \ll \mid r \mid$
 \item Umbenennung $\phi$: benennt Relationen oder Attribute um \\
-$phi_x(E)$ $\rightarrow$ Ausdruck E unter neuem Namen x
+$\phi_x(E)$ $\rightarrow$ Ausdruck E unter neuem Namen x
 \end{itemize}
 
 \noindent
@@ -391,7 +391,7 @@ $phi_x(E)$ $\rightarrow$ Ausdruck E unter neuem Namen x
 \caption{Join ohne selbem Attribut}
 \end{minipage}
 \end{figure}
-\item Theta-Verbung $\bowtie_C$: verbindet Relationen nach beliebiger Bedingung
+\item Theta-Verbund $\bowtie_C$: verbindet Relationen nach beliebiger Bedingung
 \begin{figure}[H]
 \centering
 \includegraphics[scale=.35]{pictures/theta.png}
@@ -461,7 +461,7 @@ $F_I \rightarrow$ Aggregatfunktion
 \item Edgar F. Codd, als Teil des relationalen Modells
 \item Basis vieler Abfragesprachen (QUEL, SQL)
 \item Ausdrucksform: $\{t \mid \Psi(t)\}$
-\item t: Tupevariable
+\item t: Tupelvariable
 \item $\Psi(t)$: logische Bedingung, die erfüllt sein muss
 \end{itemize}
 
@@ -793,12 +793,21 @@ DELETE FROM Kunden WHERE ...
 \item mit oder ohne explizite Attributliste
 \item mehrere Werte möglich
 \end{itemize}
+\begin{lstlisting}[language = SQL]
+INSERT INTO KUNDEN(K_ID, Name, Email, Telefon, Adresse, Stadt, Land)
+      VALUES (1000,'Scott','scott@gmail.com','12345','321 The Road','Miami','USA');
+\end{lstlisting}
 \noindent
 \textbf{\texttt{\textcolor{blue}{UPDATE}}}
 \begin{itemize}
 \item einzelnes Attribut oder mehrere ändern
 \item Wert kann auch aus Subquery stammen
 \end{itemize}
+\begin{lstlisting}[language = SQL]
+UPDATE KUNDEN
+      SET Adresse = (SELECT Adresse FROM KUNDEN WHERE K_ID = 1)
+  WHERE K_ID = 1000;
+\end{lstlisting}
 
 \section{Fortgeschrittenes SQL}
 
@@ -928,6 +937,7 @@ SELECT K_ID, Name, Gesamtbetrag
 \item Nutzen: Abstrkation, Wiederverwendung \& Sicherheit
 \end{itemize}
 
+\newpage
 \noindent
 \textbf{Definition der Sicht (DDL-Befehl)}
 \begin{lstlisting}[language=SQL]
@@ -951,7 +961,7 @@ ORDER BY Bestelldatum DESC;
 \begin{figure}[H]
 \centering
 \includegraphics[scale=.5]{pictures/ctesvssichten.png}
-\caption{Vergleich: CTEs vs Sichten}
+\caption{Vergleich: CTEs vs. Sichten}
 \end{figure}
 
 \subsection{Rekursive Anfragen}
@@ -1043,7 +1053,6 @@ WITH RECURSIVE paths(startNode, endNode, path) AS (
 SELECT startNode, endNode, path FROM paths ORDER BY length(path), path;
 \end{lstlisting}
 
-\newpage
 \noindent
 \textbf{Gib ungewichtete kürzeste Pfade zurück, die bei Knoten 1 beginnen}
 \begin{lstlisting}[language=SQL]
@@ -1074,6 +1083,7 @@ SELECT startNode, endNode, path FROM paths ORDER BY length(path), path;
 \caption{Grundprinzip von Window-Funktionen}
 \end{figure}
 
+\newpage
 \noindent
 \textbf{Wichtige Konzepte}
 \begin{itemize}
@@ -1152,6 +1162,298 @@ SELECT startNode, endNode, path FROM paths ORDER BY length(path), path;
 \includegraphics[scale=.3]{pictures/groups4.png}
 \end{minipage}
 \caption{GROUPS-Beispiele}
+\end{figure}
+
+\section{Konzeptioneller Datenbankentwurf}
+
+\subsection{Ziel des konzeptionellen Datenbankdesigns}
+
+Das konzeptionelle Design beschreibt einen relevanten Ausschnitt der realen Welt mithilfe eines formalen Modells (ER-Modell). \\
+Es ist unabhängig von technischen Implementierungen wie DBMS oder Betriebssystem. \\
+Zentrale Fragen:
+
+\begin{itemize}
+\item Welche Entitäten und Beziehungen existieren?
+\item Welche Attribute sollen erfasst werden?
+\item Welche Restriktionen (Regeln) gelten?
+\end{itemize}
+
+\subsection{Zwischenschritte im Designprozess}
+
+\begin{enumerate}
+\item Natürliche Sprache: funktionales Pflichtenheft
+\item Grafische Darstellung: ER-Diagramm
+\item Relationales Modell: z.B. Tabellen-Definitionen
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.3]{pictures/dbsdesign.png}
+\caption{Datenbankdesign}
+\end{figure}
+
+\subsection{Entity-Relationship-Modell}
+
+\begin{itemize}
+\item \textbf{Entität:} Objekt der realen Welt (z.B. Auto, Student)
+\item \textbf{Entitätstyp:} Menge gleichartiger Entitäten (z.B. alle Studenten)
+\item Attribute können sein:
+\begin{enumerate}
+\item einfach/zusammengesetzt
+\item einzelwertig/mehrwertig
+\item gespeichert/abgeleitet
+\end{enumerate}
+\item \textbf{Superschlüssel:} identifiziert Entitäten eindeutig
+\item \textbf{Kandidatenschlüssel:} minimaler Superschlüssel
+\item \textbf{Primärschlüssel} wird unterstrichen, in diesem Fall gewählter Kandidatenschlüssel
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/erd.png}
+\caption{Beispiel eines ER-Diagramms}
+\end{figure}
+
+\subsection{Beziehungen \& Beziehungstypen}
+
+\textbf{Beziehungen}
+\begin{itemize}
+\item Verknüpfung zw. Entities, z.B. Student besucht Kurs
+\item haben keine eigenen Schlüssel
+\item können Attribute besitzen, die die Beziehung selbst beschreiben (z.B. Besetelldatum)
+\end{itemize}
+
+\noindent
+\textbf{Rollen}
+Entitytyp kann in einer Beziehung mehrfach vorkommen
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/role.png}
+\caption{rekursive Beziehung}
+\end{figure}
+
+\subsection{Restriktionen: Kardinalitäten \& Teilnahme}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\textbf{Kardinalitätsverhältnisse}
+\begin{itemize}
+\item N:M (many to many $\rightarrow$ Standard)
+\item 1:1 (one to one)
+\item 1:N (one to many)
+\item N:1 (many to one)
+\item 1 im Sinne von 0 oder 1
+\item M/N im Sinne von 0 bis $\inf$
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\textbf{Teilnahmebedingungen}
+\begin{itemize}
+\item \textbf{Partielle Teilnahme:} Entity muss nicht teilnehmen
+\item \textbf{Totale Teilnahme:} Entity muss Teil min einer Beziehung sein (Exitenzabhängigkeit)\\
+z.B. Mitarbeiter muss einer Abteilung zugeordnet sein
+\end{itemize}
+\end{minipage}
+\end{figure}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/bzrbsp1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/bzrbsp2.png}
+\end{minipage}
+\\[1em]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/bzrbsp3.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/bzrbsp4.png}
+\end{minipage}
+\caption{Beispiele zu den Kardinalitätsverhältnissen}
+\end{figure}
+
+\noindent
+\textbf{Min-Max-Notation}
+\begin{itemize}
+\item exakte Vorgabe von min/max Teilnahme einer Entity an einer Beziehung
+\item Entity kommt nicht zwingend vor: $min_i = 0$
+\item Entity kommt beliebig of vor: $max_i = *$
+\item Tupelschreibweise für die Entity: $(min_i, max_i)$
+\end{itemize}
+
+\subsection{N-äre Beziehungen}
+
+\begin{itemize}
+\item Beziehungen mit mehr als 2 Entities
+\item Integritätsbedingungen komplexer
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.4]{pictures/när.png}
+\caption{Veranschaulichung einer N-ären Beziehung}
+\end{figure}
+
+\subsection{Schwache Entities}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item können nicht unabhängig existieren
+\item benötigen eine starke Entity für eindeutige Identifizierung
+\item typisch über 1:N-Beziehung (1:1 auch möglich)
+\item Darstellung: doppelte Umrandung am Rechteck \& doppelte Linie zur Beziehung
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\vspace{5mm}
+\includegraphics[width=\linewidth]{pictures/we.png}
+\caption{Schwache Entity Beispiel}
+\end{minipage}
+\end{figure}
+
+\subsection{Generalisierung/Spezialisierung}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item Ziel: Strukturierung von Entitytypen
+\item Supertyp umfasst gemeinsame Attribute, Subtypen erben diese
+\item Eigenschaften: disjunkt, vollständig
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\vspace{-23mm}
+\includegraphics[width=\linewidth]{pictures/gen.png}
+\caption{Generalisierung mit Diagramm}
+\end{minipage}
+\end{figure}
+
+\subsection{Aggregation}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\vspace{5mm}
+\begin{itemize}
+\item Strukturierung versch. Entitytypen bilden zsm neue Einheit
+\item Synatx: Beziehungsnotation mit Label part-of
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\vspace{-5mm}
+\includegraphics[width=\linewidth]{pictures/bom.png}
+\caption{bill of materials}
+\end{minipage}
+\end{figure}
+
+\subsection{Entwurfsentscheidungen}
+
+\textbf{Typische Entscheidungen}
+\begin{itemize}
+\item Entity vs. Attribut
+\item Entity vs. Beziehung
+\item Binäres vs. N-äre Beziehung
+\end{itemize}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/ewe1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/ewe2.png}
+\end{minipage}
+\caption{Attribut vs. Entity}
+\end{figure}
+
+\noindent
+\textbf{Schritte beim Entwurf eines ER-Modells}
+
+\begin{enumerate}
+\item Identifiziere Entitätstypen (Entitätstyp vs. Attribut)
+\item Identifiziere Beziehungstypen
+\item Identifiziere und ordne Attribute Entitäten und Beziehungen zu
+\item Bestimme Attributdomänen
+\item Bestimme Primärschlüsselattribute für Entitätstypen
+\item Ordne (verfeinerte) Kardinalitätsverhältnisse den Beziehungstypen zu
+\end{enumerate}
+
+\subsection{Übersetzung ER-Schema in relationales Schema}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\textbf{Entity $\rightarrow$ Relationen}
+\begin{itemize}
+\item jeder Entitytyp wird zu einer Tabelle
+\item Attribute $\rightarrow$ Spalten
+\item Primärschlüssel übernommen
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\textbf{Beziehungen}
+\begin{itemize}
+\item M:N $\rightarrow$ eigene Relation mit Fremdschlüssel auf beide Entities
+\item 1:N $\rightarrow$ Fremdschlüssel auf 1-Seite
+\item 1:1 $\rightarrow$ Zsmführung möglich
+\item N-äre Beziehungen $\rightarrow$ eigene Tabelle mit allen Fremdschlüsseln
+\end{itemize}
+\end{minipage}
+\\
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/errs1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/errs2.png}
+\end{minipage}
+\\[1em]
+\centering
+\includegraphics[scale=.3]{pictures/errs3.png}
+\caption{N:M, 1:N \& tenäre Beziehungen}
+\end{figure}
+
+\newpage
+\noindent
+\textbf{Optimierungen}
+\begin{itemize}
+\item funktionale Beziehungen können Tabellen zsmführen
+\item unnötige Relationen vermeiden
+\item NULL-Werte vermeiden
+\item Relationen für Supertyp \& Subtyp (Join nötig)
+\end{itemize}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/errs4.png}
+\caption{Schema ohne NULL-Werte}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/errs5.png}
+\caption{mit Join zsmgeführt}
+\end{minipage}
 \end{figure}
 
 \end{document}
