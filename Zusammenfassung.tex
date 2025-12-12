@@ -1456,4 +1456,253 @@ z.B. Mitarbeiter muss einer Abteilung zugeordnet sein
 \end{minipage}
 \end{figure}
 
+\section{Datenbanknormalisierung}
+
+\subsection{Warum gutes Schema-Desing wichtig ist}
+
+Schlecht entworfene relationale Schemata führen zu:
+
+\begin{itemize}
+\item Redundanzen $\rightarrow$ mehrfach gespeicherte Informationen
+\item Inkonsistenzen $\rightarrow$ widersprüchliche Daten bei Updates
+\item Anomalien bei DML-Operationen:
+\begin{itemize}
+\item Update-Anomalien \\
+nicht alle Duplikate werden geändert
+\item Lösch-Anomalien \\
+Informationen gehen unbeabsichtigt verloren
+\item Einfüge-Anomalien \\
+Daten können ohne andere Daten nicht eingefügt werden
+\end{itemize}
+\item Wartbarkeits- \& Performanceproblemen
+\end{itemize}
+
+\noindent
+Ziel: Redundanzen vermeiden, ohne Informationen zu verlieren oder Rekonstruktion zu verhindern.
+
+\subsection{Normalisierung}
+
+\begin{itemize}
+\item Verfeinerung des logischen Schemas durch Zerlegung von Relationen
+\item Anforderungen:
+\begin{enumerate}
+\item Verlustfreie Zerlegung (Originalrelation rekonstruierbar)
+\item Abhängigkeitserhaltende Zerlegung
+\end{enumerate}
+\item Umsetzung über Normalformen, basierend auf funktionalen Abhängigkeiten
+\end{itemize}
+
+\subsection{Funktionale Abhängigkeiten (FDs)}
+
+\begin{itemize}
+\item Wert/Menge eines Attributs bestimmt Wert eines Anderen eindeutig
+\item funktionale Abhängigkeit X$\rightarrow$Y: gleiche Werte in X $\Rightarrow$ gleiche Werte in Y
+\item wenn zwei Tupel mit gleichen Werten in allen Attributen von
+X auch gleiche Werte in allen Attributen von Y haben müssen
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.4]{pictures/fd.png}
+\caption{Beispiele funktionaler Abhängigkeiten}
+\end{figure}
+
+\subsection{Arten funktionaler Abhängigkeiten}
+
+\begin{itemize}
+\item Triviale funktionale Abhängigkeit: X$\rightarrow$Y mit Y $\subseteq$X
+\item Volle funktionale Abhängigkeit: Attribut hängt vom gesamten Schlüssel ab
+\item Partielle funktionale Abhängigkeit: Attribut hängt nur von einem Teil des Schlüssels ab
+\end{itemize}
+
+\subsection{Schlüsselbegriffe}
+
+\begin{itemize}
+\item Superschlüssel: Attributmenge, die Tupel eindeutig identifiziert
+\item Kandidatenschlüssel: minimaler Superschlüssel
+\item Primärschlüssel: ausgewählter Kandidatenschlüssel
+\end{itemize}
+
+\noindent
+Zusammenhang:
+\begin{itemize}
+\item S ist Superschlüssel $\Leftrightarrow$ S$\rightarrow$R
+\item S ist Kandidatenschlüssel $\Leftrightarrow$ S$\dot{\rightarrow}$R \& Abhängigkeit ist voll
+\end{itemize}
+
+\subsection{Armstrong-Axiome (Ableitungsregeln)}
+
+\begin{enumerate}
+\item Reflexivität: Y$\subseteq$X $\Rightarrow$ X$\rightarrow$Y
+\item Augmentation/Verstärkung: X$\rightarrow$Y $\Rightarrow$ XZ$\rightarrow$YZ
+\item Transitivität: X$\rightarrow$Y $\vee$ Y$\rightarrow$Z $\Rightarrow$ X$\rightarrow$Z
+\item Dekomposition: X$\rightarrow$YZ $\Rightarrow$ X$\rightarrow$Y $\vee$ X$\rightarrow$Z
+\item Vereinigung: X$\rightarrow$Y $\vee$ X$\rightarrow$Z $\Rightarrow$ X$\rightarrow$YZ
+\item Pseudotransitivität: X$\rightarrow$Y $\vee$ YZ$\rightarrow$W $\Rightarrow$ XZ$\rightarrow$W
+\end{enumerate}
+
+\subsection{Attributabschluss}
+
+$X^+$ = Menge aller Attribute, die durch X mittels der funktionalen Abhängigkeiten F funktional bestimmt werden können
+
+\begin{enumerate}
+\item Initialisierung des Abschlusses
+\item Iteration über funktionale Abhängigkeiten
+\item Wiederhole bis keine Änderung
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/attributsabschluss.png}
+\caption{Berechnung des Attributsabschlusses (Attribut Hülle)}
+\end{figure}
+
+\subsection{Kanonische Überdeckung (Canonical Cover)}
+
+\begin{itemize}
+\item Äquivalent zur ursprünglichen FD-Menge
+\item Keine überflüssigen Attribute links oder rechts
+\item Jede linke Seite ist eindeutig
+\item Vereinfachung des Entwurfs
+\item Grundlage für Normalisierung (z. B. 3NF, BCNF)
+\end{itemize}
+
+\noindent
+\textbf{Algoablauf}
+\begin{enumerate}
+\item Linke Reduktion für jede FD , Resultat ist F'
+\item Rechte Reduktion für jede FD (F'), Resultat ist F''
+\item Entferne alle FDs der Form X$\rightarrow$ $\varnothing$ aus F''
+\item Vereinfache FDs durch die Vereinigungsregel
+\end{enumerate}
+
+\newpage
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/cc.png}
+\caption{einfaches Bsp. kanonischer Überdeckung}
+\end{figure}
+
+\subsection{Zerlegung relationaler Schemata}
+
+\begin{enumerate}
+\item verlustfrei: durch \texttt{JOIN} ursprüngliche Relation ohne Informationsverlust
+\item abhängkeitserhaltend: stellt sicher, dass funktionale Abhängigkeiten bestehen bleiben
+\end{enumerate}
+
+\subsection{Normalformen}
+
+beschreiben Eigenschaften von Relationsschemata \&
+\begin{itemize}
+\item verbieten bestimmte funktionale Abhängigkeiten
+\item vermeiden Redundanzen
+\item verhindern Update-, Insert- \& Delete-Anomalien
+\end{itemize}
+
+\noindent
+Reihenfolge (immer stärker werdend)
+\begin{enumerate}
+\item 1NF
+\item 2NF
+\item 3NF
+\item BCNF
+\item 4NF (optional / fortgeschritten)
+\end{enumerate}
+
+\subsubsection{1. Normalform (1NF)}
+
+\begin{itemize}
+\item alle Attribute atomar
+\item keine Listen, Arrays oder Mengen als Attributwerte
+\item rein strukturell, unabhängig von funktionalen Abhängigkeiten
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.45]{pictures/1nf.png}
+\caption{1NF Schema}
+\end{figure}
+
+\subsubsection{2. Normalform (2NF)}
+
+\begin{itemize}
+\item Attribute hängen nur von einem Teil des Schlüssels ab
+\item eliminiert partielle Abhängigkeiten
+\item 1NF \& kein Nicht-Schlüsselattribut funktional abhängig von einem echten Teil eines Kandidatenschlüssels ist 
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.45]{pictures/2nf.png}
+\caption{2NF Schema}
+\end{figure}
+
+\subsubsection{3. Normalform (3NF)}
+
+\begin{itemize}
+\item Vermeidung transitiver Abhängigkeit
+\item Nicht-Schlüsselattribute dürfen nicht von anderen Nicht-Schlüsselattributen abhängen
+\end{itemize}
+
+\subsubsection{Synthese Algorithmus}
+
+\textbf{Ziel:} automatische Erzeugung einer verlustfreien \& abhängigkeitserhaltenden Zerlegung in 3NF
+
+\begin{enumerate}
+\item Bestimme die kanonische Hülle $F_C$ von $F$
+\item Erzeuge neue Relationsschemata aus $F_C$
+\item Rekonstruiere einen Kandidatenschlüssel
+\item Entferne überflüssige Relationen
+\end{enumerate}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/sa1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/sa2.png}
+\end{minipage}
+\caption{Synthese Algo Bsp.zerlegung}
+\end{figure}
+
+\subsubsection{Boyce-Codd-Normalform (BCNF)}
+
+\begin{itemize}
+\item vermeidet Redundanzen
+\item kann aber Abhängigkeitserhaltung verletzen
+\item um BCNF zu sein: Y$\subseteq$X (trivial) oder X ist ein Superschlüssel bei X$\rightarrow$Y
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.45]{pictures/bcnf.png}
+\caption{BCNF Schema}
+\end{figure}
+
+\subsubsection{Mehrwertige Abhängigkeiten (MVD)}
+
+\[X \twoheadrightarrow Y\]
+
+\begin{itemize}
+\item Verallgemeinerung einer funktionalen Abhängigkeit
+\item Jede funktionale Abhängigkeit ist auch eine mehrwertige Abhängigkeit, aber nicht jede mehrwertige Abhängigkeit ist auch funktional
+\item Y mehrwertig abhängig von X (X $\twoheadrightarrow$ Y)
+\item zu einem festen Wert von X können mehrere Werte von Y existieren
+\item trivial: Y$\subseteq$X oder Y = $\mathcal{R}$ - X
+\item triviale MVDs verursachen keine Redundanzen
+\item Zerlegung von Relationsschema verlustfrei, wenn Menge funktionale \& mehrwertige Abhängigkeiten hat
+\end{itemize}
+
+\subsubsection{4. Normalform (4NF)}
+
+\begin{itemize}
+\item Erweiterung von BCNF
+\item behandelt mehrwertige Abhängigkeiten (MVDs)
+\item Unabhängige Mehrfachfakten sollen nicht kombiniert gespeichert werden
+\item 4NF: X$\twoheadrightarrow$Y trivial oder X ist ein Superschlüssel
+\end{itemize}
+
 \end{document}
