@@ -1705,4 +1705,377 @@ Reihenfolge (immer stärker werdend)
 \item 4NF: X$\twoheadrightarrow$Y trivial oder X ist ein Superschlüssel
 \end{itemize}
 
+\section{Transaktionsverwaltung}
+
+\subsection{Grundkonzept}
+
+\begin{itemize}
+\item eine Folge von Datenbankoperationen, die atomar als eine Einheit ausgeführt wird
+\item Typische Einsatzfälle: Online-Buchungssysteme, Banktransaktionen
+\item Ohne Transaktionen können Inkonsistenzen entstehen (z. B. doppelte Sitzplatzvergabe)
+\end{itemize}
+
+\subsection{Transkationsverarbeitung}
+
+\begin{itemize}
+\item serielle Ausführung korrekt, aber ineffizient
+\item nebenläufige (parallele) Ausführung erhöht Durchsatz \& reduziert Antwortzeiten
+\item Herausforderung: Korrektheit \& Fairness sicherstellen
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/probtrans.png}
+\caption{problematische Transaktionen}
+\end{figure}
+
+\subsection{Operationen in Transaktionen}
+
+\begin{itemize}
+\item Grundoperationen: \texttt{read}, \texttt{write}
+\item Steueroperationen
+\begin{enumerate}
+\item BOT (Begin of Transaction): kennzeichnet Start einer neuen Transaktion
+\item Commit: Änderungen werden dauerhaft gespeichert
+\item Abort/Rollback: Änderungen rückgängig machen
+\end{enumerate}
+\end{itemize}
+
+\subsection{ACID-Eigenschaften}
+
+\begin{itemize}
+\item Atomicity: Alles-oder-Nichts-Ausführung
+\item Consistency: Übergang zw. konsistenten Zuständen ($\rightarrow$ Integritätsbedingungen)
+\item Isolation: nebenläufige Transaktionen beinflussen sich nicht sichtbar ($\rightarrow$ Nebenläufigkeitskontrolle)
+\item Durability: Änderungen nach Commit bleiben dauerhaft erhalten ($\rightarrow$ Wiederherstellung/Recovery)
+\end{itemize}
+
+\subsection{Aufgaben des DBMS bei Transaktionen}
+
+\begin{enumerate}
+\item Synchronisation nebenläufiger Transaktionen
+\item Recovery nach Software- oder Hardwarefehlern
+\end{enumerate}
+
+\subsection{Read-Write-Modell \& Schedules}
+
+\begin{itemize}
+\item modelliert Datenbankzugriffe mit \texttt{read(A, x)} \& \texttt{write(x, A)}
+\item Schedule eine zeitliche Vermischung von Operationen mehrerer Transaktionen
+\item Problem: nicht jeder Schedule korrekt
+\end{itemize}
+
+\subsection{Typische Probleme ohne Nebeläufigkeitskontrolle}
+
+\begin{itemize}
+\item Lost Updates
+\item Dirty Reads (Lesen nicht committeter Daten)
+\item non-repeatable Reads (mehrmaliges Lesen liefert untersch. Ergebnisse)
+\item Phantom Reads (erscheinen neuer Datensätze zw. 2 Lesevorgängen)
+\end{itemize}
+
+\subsection{Transaktionskonflikte}
+
+entstehen bei Zugriffen versch. Tranaktionen auf dasselbe Objekt, wenn min. ein Schreibzugriff beteiligt ist
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/transkon.png}
+\caption{mögliche Transaktionskonflikte}
+\end{figure}
+
+\subsection{Serielle vs. serialisierbare Schedules}
+
+\begin{itemize}
+\item Serieller Schedule: maximale Isolation (Transaktionen nacheinander ausgeführt), schlechte Performance
+\item Serialisierbar: nebenläufig, aber äquivalent zu einem seriellen Ablauf (S' äquivalent zu S vom Ergebnis her)
+\begin{itemize}
+\item Konflikt-Serialisierbarkeit (praxisrelevant, von DBMS unterstützt)
+\item View-Serialisierbarkeit (theoretisch, kaum umsetzbar)
+\end{itemize}
+\end{itemize}
+
+\subsection{Konflikt-Serialisierbarkeit}
+
+2 Schedules $S_1$ \& $S_2$ sind konfliktäquivalent, wenn
+\begin{itemize}
+\item sie dieselben Transaktionen
+\item mit denselben Operationen
+\item \& derselben Reihenfolge aller konfliktierenden Operationen enthalten
+\end{itemize}
+\noindent
+$\Rightarrow$ Nicht-konfliktierende Operationen dürfen vertauscht werden
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.4]{pictures/kssbsp.png}
+\caption{Bsp. zur Entscheidung ob konfliktäquivalent}
+\end{figure}
+
+\noindent
+\textbf{Schedule S ist konflikt-serialisierbar, wenn S zu einem seriellen Schedule konfliktäquivalent ist.}
+
+\subsection{Prüfung auf Konflikt-Serialisierbarkeit}
+
+\textbf{Präzedenzgraph (Abhängigkeitsgraph)}
+\begin{enumerate}
+\item für jede Transaktion ein Knoten
+\item Kante $T_i \rightarrow T_j$, wenn $T_i$ vor $T_j$ konfliktierende Operation ausführt
+\item kein Zyklus $\rightarrow$ konflikt-serialisierbar, Zyklus $\rightarrow$ nicht konflikt-serialisierbar
+\end{enumerate}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[scale=.5]{pictures/pks1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[scale=.5]{pictures/pks2.png}
+\end{minipage}
+\caption{links nicht konflikt-serialisierbar \& recht konflikt-serialisierbar}
+\end{figure}
+
+\subsection{Zurücksetzbare (recoverable) Transaktions-Schedules}
+
+\begin{itemize}
+\item Transaktion erst committen darf, nachdem alle Transaktionen,
+deren Daten sie gelesen hat, ebenfalls committet haben
+\item verhindert Cascading Rollbacks
+\item Voraussetzung für korrektes Recovery
+\end{itemize}
+
+\subsection{Kaskadierende \& strikte Schedules}
+
+\begin{itemize}
+\item Nicht-recoverable: falsche Commit-Reihenfolge
+\item Recoverable: korrekt, aber evtl. Rollbacks
+\item Cascadeless: keine Dirty Reads
+\item Strict: keine Lese-/Schreibzugriffe auf uncommittete Daten 
+\end{itemize}
+
+\subsection{Nebenläufigkeitskontrolle}
+
+\begin{itemize}
+\item Aufgabe des DBMS zur Sicherstellung von Isolation
+\item Ziel: nur korrekte Schedules zulassen
+\item praktische Umsetzung mit Locks
+\end{itemize}
+
+\subsubsection{Locks}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item S-Lock (Shared Lock): erlaubt Lesen, mehrere Transaktionen gleichzeitig
+\item X-Lock (Exclusive Lock): Schreiben erlaubt, exklusiv
+\item unlock
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\vspace{-5mm}
+\centering
+\includegraphics[width=\linewidth]{pictures/lkm.png}
+\caption{Lock-Kompatibilitätsmatrix}
+\end{minipage}
+\end{figure}
+
+\subsubsection{Two-Phase-Locking (2PL) Protokoll}
+
+\begin{itemize}
+\item Wachstumsphase: Locks anfordern
+\item Schrumpfphase: Locks freigeben
+\item garantiert Konfliktserialisierbarkeit
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/2pl.png}
+\caption{2PL Veranschaulichung}
+\end{figure}
+
+\subsubsection{Striktes Two-Phase-Locking Protokoll}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item alle X-Locks erst bei Commit/Abort freigegeben
+\item keine Dirty Reads, einfaches Recovery
+\item Industriestandard
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\vspace{-15mm}
+\centering
+\includegraphics[width=\linewidth]{pictures/s2pl.png}
+\caption{S2PL Diagramm}
+\end{minipage}
+\end{figure}
+
+\subsection{Isolationsstufen}
+
+\begin{enumerate}
+\item Read Uncommited: liest Daten, die noch nicht committet sind
+\item Read Commited: liest nur committete Daten
+\item Repeatable Read: gelesene Daten bleiben stabil während Transaktion
+\item Seializable: wie ein serieller Schedule
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/isozsm.png}
+\caption{Zusammenfassung der Stufen}
+\end{figure}
+
+\newpage
+
+\subsection{Wiederherstellung (Recovery)}
+
+Fehlertypen
+\begin{itemize}
+\item Transaktionsfehler (logisch)
+\item Systemfehler (Hardware/Software)
+\item Medienfehler (Speicher)
+\end{itemize}
+\noindent
+
+\subsection{Recoverystrategien}
+
+\subsubsection{Seitenersetzungsstrategien}
+
+\begin{enumerate}
+\item STEAL
+\begin{itemize}
+\item Seiten mit uncommitteten Änderungen dürfen auf die Festplatte geschrieben werden
+\item Änderungen abgebrochener Transaktionen müssen \texttt{undo} werden
+\end{itemize}
+\item NO-STEAL
+\begin{itemize}
+\item Seiten mit uncommitteten Änderungen dürfen nicht geschrieben werden
+\item Kein \texttt{undo} nötig
+\end{itemize}
+\end{enumerate}
+
+\subsubsection{Propagierungsstrategien}
+
+\begin{enumerate}
+\item FORCE
+\begin{itemize}
+\item Geänderte Seiten werden beim Commit sofort auf die Festplatte geschrieben
+\item Änderungen committeter Transaktionen sind sicher
+\end{itemize}
+\item NO-FORCE
+\begin{itemize}
+\item Geänderte Seiten müssen beim Commit nicht sofort geschrieben werden
+\item Änderungen müssen ggf. \texttt{redo} werden
+\end{itemize}
+\end{enumerate}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/recstra.png}
+\caption{Übersicht der Strats}
+\end{figure}
+
+\begin{itemize}
+\item FORCE/NO STEAL: einfach, aber langsam
+\item NO FORCE/STEAL: komplex aber schnell
+\end{itemize}
+
+\subsubsection{Seitenallokationsstrategien}
+
+Wie schmutzige Seiten auf Sekundärspeicher zurückschreiben?
+
+\begin{enumerate}
+\item Direkte Allokation (nicht atomar)
+\begin{itemize}
+\item Jede Seite im Buffer ist genau einer Seite in der Datenbank zugeordnet
+\item Buffer-Seite wird beim Auslagern auf die entsprechende Datenbankseite kopiert
+\item alte Zustandr geht dabei verloren
+\item Zur Wiederherstellung älterer Zustände ist zusätzliches Logging erforderlich
+\end{itemize}
+\item Indirekte Allokation (atomar)
+\begin{itemize}
+\item Für jede Buffer-Seite wird ein Zwillingsblock im stabilen Speicher reserviert
+\item Buffer-Seite wird jeweils in den „älteren“ Zwillingsblock ausgelagert
+\item Selbst im Fehlerfall ist der zuletzt konsistente Zustand verfügbar
+\item Doppelter Speicherbedarf
+\item Seitentabellen zur Abbildung zwischen flüchtigem und stabilem Speicher passen nicht vollständig in den Hauptspeicher
+\end{itemize}
+\end{enumerate}
+
+\subsection{Logging}
+
+\begin{enumerate}
+\item physisches Logging: Speicherung der exakten physischen Änderungen an einer
+Speichereinheit (z. B. einem Byte oder einer Seite)
+\item logisches Logging: Speicherung der Operationen, die zu den Änderungen führen
+\item physiologisches Logging: physisch auf Seitenebene, logisch innerhalb einer Seite
+\end{enumerate}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/dlog1.png}
+\caption{zu loggende Infos}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.5\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/dlog2.png}
+\caption{Logstruktur}
+\end{minipage}
+\end{figure}
+
+\subsection{Write-Ahead Logging}
+
+\begin{itemize}
+\item Alle Änderungen werden zuerst ins Log geschrieben, bevor Datenseiten auf die Festplatte dürfen
+\item Commit erst erlaubt, wenn alle Log-Einträge dauerhaft gespeichert sind
+\item Ermöglicht UNDO (für nicht-committete Transaktionen) und REDO (für committete Transaktionen)
+\item Grundlage für STEAL + NO FORCE-Strategien
+\item Industriestandard moderner DBMS
+\end{itemize}
+
+\subsection{Recoveryprozess}
+
+\begin{enumerate}
+\item Log-Analyse: Bestimmung von Gewinnern/Verlierern
+\begin{itemize}
+\item Gewinner mit (T, commit)
+\item Verlierer ohne/mit (T,abort)
+\end{itemize}
+\item REDO-Phase: Änderungen committeter Transaktionen wiederherstellen
+\begin{itemize}
+\item Fall 1: $LSN_p \geq LSN_l$ $\Rightarrow$ keine Aktion
+\item Fall 2: $LSN_p < LSN_l$ $\Rightarrow$ im Log-Eintrag gespeicherte REDO-Operation ausführen, $LSN_p$ durch $LSN_l$ ersetzen
+\end{itemize}
+\item UNDO-Phase: Änderungen nicht-committeter Transaktionen rückgängig machen
+\end{enumerate}
+
+\subsection{Idempotenz}
+
+wichtig, wenn das DBMS beim Neustart und des Recoveryprozesses abschmiert
+
+\begin{enumerate}
+\item REDO
+\begin{itemize}
+\item $LSN_p \geq LSN_l$ $\Rightarrow$ wurde bereits angewendet, es ist also nichts zu tun
+\item $LSN_p < LSN_l$ $\Rightarrow$ wurde noch nicht angewendet
+\end{itemize}
+\item UNDO
+\begin{itemize}
+\item Speicherung zusätzlicher Infos im Compensation Log Records (CLRs)
+\item Für jede ausgeführte UNDO-Operation erzeugt ein CLR mit einer eindeutigen LSN
+\item Falls das DBMS während des UNDO ausfällt, undo redoen
+\item Jede UNDO-Operation, die bereits während der REDO-Phase ausgeführt wurde, wird in
+der anschließenden UNDO-Phase übersprungen
+\item UndoNxtLSN, um auf die der aktuellen zu kompensierenden Operation
+vorhergehende UNDO-Operation zu verweisen
+\end{itemize}
+\end{enumerate}
+
 \end{document}
