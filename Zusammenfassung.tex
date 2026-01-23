@@ -14,7 +14,11 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{tocloft}
 \usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+
+\setlength{\cftsubsecnumwidth}{3em}
+\setlength{\cftsubsubsecnumwidth}{3.5em}
 
 \lstset{
   basicstyle=\ttfamily\small,
@@ -2077,5 +2081,508 @@ der anschließenden UNDO-Phase übersprungen
 vorhergehende UNDO-Operation zu verweisen
 \end{itemize}
 \end{enumerate}
+
+\section{Storage \& File Structures}
+
+\subsection{Storage vs. Memory}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\textbf{Storage (HDD, SSD, etc.)}
+\begin{itemize}
+\item nicht-flüchtig, große Kapazität, günstig
+\item hohe Latenz ($\mu$s -ms)
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\textbf{Memory (DRAM, SRAM)}
+\begin{itemize}
+\item flüchtig, sehr schnell (ns)
+\item begrenzte Kapazität, teuer
+\end{itemize}
+\end{minipage}
+\end{figure}
+\noindent
+$\Rightarrow$ DBMS müssen mit einem großen Performance-Gap zw. Storage \& Memory umgehen.
+
+\subsection{Klassifikation physischer Speichermedien}
+
+\begin{itemize}
+\item \textbf{Performance:} Zugriffszeit, Kosten pro Dateneinheit
+\item \textbf{Zuverlässigkeit:} Verhalten bei Stromausfall/Systemabsturz, physischer Ausfall von Medien
+\end{itemize}
+
+\subsection{Speichermedien}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\textbf{Cache}
+\begin{itemize}
+\item extrem schnell, sehr teuer, flüchtig
+\item Hardware-/OS-verwaltet
+\end{itemize}
+\noindent
+\textbf{Hauptspeicher}
+\begin{itemize}
+\item direkt Verarbeitung durch CPU
+\item zu klein für komplette DB
+\item Trend: persistenter Hauptspeicher (z.B. Intel Optane)
+\end{itemize}
+\noindent
+\textbf{Flash/Magnetische Festplatten}
+\begin{itemize}
+\item zentraltes Medium für DB-Speicherung
+\item Direktzugriff, nicht flüchtig
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\textbf{Optische Medien}
+\begin{itemize}
+\item CD/DVD, WORM
+\item vor allem für Archivierung
+\end{itemize}
+\noindent
+\textbf{Tape}
+\begin{itemize}
+\item sehr hohe Kapazität, sequenzieller Zugriff
+\item Backup \& Archiv
+\end{itemize}
+\end{minipage}
+\end{figure}
+
+\subsubsection{Speicherhierarchie}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item \textbf{Primärspeicher:} Cache, RAM (schnell, flüchtig)
+\item \textbf{Sekundärspeicher:} Festplatten (nicht-flüchtig)
+\item \textbf{Tertiärspeicher:} Band, optische Medien (langsam)
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\vspace{-10mm}
+\includegraphics[width=\linewidth]{pictures/speicherhierarchi.png}
+\caption{Speicherhierarchie}
+\end{minipage}
+\end{figure}
+
+\subsubsection{Metriken für magnetische Festplatten}
+
+\begin{itemize}
+\item Zugriffszeit: Suchzeit + Rotationszeit
+\item Datenübertragungsrate
+\item MTTF (Mean Time To Failure)
+\end{itemize}
+
+\subsubsection{Rotationsverzögerung \& Seek Time}
+
+\begin{itemize}
+\item $R_{max} = \frac{60 \cdot 1000}{\text{RPM}}$
+\item $R_{avg} = 0,5 \cdot R_{max}$
+\item Seek Time: Bewegung des Schreib-/Lesekopfs zur Spur 
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/seektime.png}
+\caption{Seek Time}
+\end{figure}
+
+\subsubsection{Optimierung des Festplattenzugriffs}
+
+\textbf{Block}
+\begin{itemize}
+\item kleinste I/O-Einheit
+\item Übertragung zw. Disk \& RAM
+\end{itemize}
+\noindent
+\textbf{Dateiorganisation}
+\begin{itemize}
+\item DB als Dateien $\rightarrow$ Seiten $\rightarrow$ Datensätze
+\item Ziel: Minimierung von I/O durch räumliche Nähe verwandter Daten
+\end{itemize}
+
+\subsection{Seiten \& Speicherzugriff im DBMS}
+
+\begin{itemize}
+\item Einheit für Allokation \& Transfer
+\item enthalten Tupel, Indizes, Logs etc.
+\item Ziel: Minimierung der Seitentransfers durch Caching im RAM
+\end{itemize}
+
+\subsection{Lokalität}
+
+\begin{itemize}
+\item Räumliche Lokalität: zsmgehörige Seiten physisch nahe speichern
+\item Zeitliche Lokalität: Seiten möglichst lange im Hauptspeicher halten
+\end{itemize}
+
+\subsection{Festplatten-orientierte DBMSs}
+
+\begin{itemize}
+\item gesamter DB-Zustand liegt auf Festplatte
+\item Buffer Pool
+\begin{itemize}
+\item Teil des Hauptspeichers
+\item enthält Kopien von Festplattenseiten
+\end{itemize}
+\item Buffer Pool Manager: lädt, ersetzt \& schreibt Seiten zurück
+\end{itemize}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/bp1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/bp2.png}
+\end{minipage}
+\caption{Laden einer Seite}
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/bp3.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/bp4.png}
+\end{minipage}
+\caption{Ersetzen einer Seite}
+\end{figure}
+
+\subsection{Buffer Pool Manager - Arbeitsweise}
+
+\begin{enumerate}
+\item Seite im Buffer $\rightarrow$ Adresse zurückgeben
+\item Seite nicht im Buffer $\rightarrow$ Platz schaffen (Eviction)
+\item Dirty Pages werden zurückgeschrieben
+\item Seite wird von Disk geladen
+\end{enumerate}
+
+\subsection{Seitenersetzungsstrategien}
+
+\begin{itemize}
+\item LRU (Least Recently Used)
+\begin{itemize}
+\item ersetzt am längsten nicht genutzte Seite
+\item gut für viele Workloads
+\item schlecht bei wiederholten sequentiellen Scans
+\end{itemize}
+\item Praxis: Kombination mit Query-Optimizer-Hinweisen
+\end{itemize}
+
+\subsection{Dateiorganisation}
+
+\begin{itemize}
+\item DB = Dateien $\rightarrow$ Seiten $\rightarrow$ Datensätze $\rightarrow$ Felder
+\item einfacher Ansatz: 
+\begin{itemize}
+\item feste Datensatzlänge
+\item eine Relation pro Datei
+\end{itemize}
+\end{itemize}
+
+\subsection{Datensätze fester Länge}
+
+\begin{itemize}
+\item direkter Zugriff über Offset
+\item Löschstrategien: markieren, verschieben, Austausch mit letztem Datensatz, Free Lists
+\end{itemize}
+
+\subsection{Free Lists}
+
+\begin{itemize}
+\item Verwaltung gelöschter Datensätze
+\item Verkettete Liste freier Plätze
+\item reduziert Fragmentierung
+\end{itemize}
+
+\subsection{Datensätze variabler Länge}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item \textbf{Gründe:}
+\begin{itemize}
+\item unterschiedliche Record-Typen
+\item variable Felder (VARCHAR)
+\end{itemize}
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item \textbf{Herausforderungen:}
+\begin{itemize}
+\item Fragmentierung
+\item Update erfordern Verschieben
+\item Überlauf auf andere Seiten
+\end{itemize}
+\end{itemize}
+\end{minipage}
+\end{figure}
+
+\subsubsection{Ansätze für variable Datensätze}
+
+\begin{itemize}
+\item End-of-Record Marker
+\item Fild Delimiters
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.75]{pictures/fielde.png}
+\caption{erfordert Scan, um Wert des n-ten Feldes zu erhalten; ein Feld für NULL-Wert}
+\end{figure}
+\item Array of Field Offsets
+\begin{itemize}
+\item direkter Feldzugriff
+\item saubere Null-Verwaltung
+\end{itemize}
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.6]{pictures/afo.png}
+\caption{Start-/End-Point eines selben Feldes zeigen auf dieselbe Adresse}
+\end{figure}
+\end{itemize}
+
+\subsubsection{Slotted Pages}
+
+\begin{itemize}
+\item Slot Dir am Seitenende
+\item Datensätze können innerhalb der Seite verschoben werden
+\item Vorteile: stabile RIDs, effiziente Inserts/Deletes
+\end{itemize}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.33\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/slotp1.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.33\textwidth}
+\centering
+\includegraphics[width=\linewidth]{pictures/slotp2.png}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.33\textwidth}
+\centering
+\includegraphics[scale=.3]{pictures/slotp3.png}
+\end{minipage}
+\caption{Löschen, einfügen \& erweitern}
+\end{figure}
+
+\subsubsection{Datensatz-Identifikatoren (RID/TID)}
+
+\begin{itemize}
+\item eindeutige Identifikation: Seiten-ID, Slot-ID
+\item Grundlage für Referenzen \& Indizes
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/di.png}
+\caption{RID}
+\end{figure}
+
+\subsection{Datenbank Workloads}
+
+\begin{itemize}
+\item On-Line Transaction Processing (OLTP): viele kleine, schreibintensive Operationen
+\item On-Line Analytical Processing (OLAP): komplexe, leselastige Scans
+\item Hybrid Transaction + Analytical Processing (HTAP): Kombi aus beiden
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.35]{pictures/dw.png}
+\caption{Choose what is best}
+\end{figure}
+
+\subsection{Datenspeichermodelle}
+
+\begin{itemize}
+\item NSM (Row Store)
+\item DSM (Column Store)
+\item Pax (Hybrid)
+\item abhängig von Workload
+\end{itemize}
+
+\subsubsection{N-ary Storage Mode (NSM)}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item alle Attribute eines Tupels zsm
+\item ideal für OLTP
+\item Vorteile: schnelle Inserts/Updates
+\item Nachteile: schlechte Performance bei Attributscans, schlechte Kompression
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\vspace{-25mm}
+\includegraphics[scale=.45]{pictures/nsm.png}
+\caption{Row Store}
+\end{minipage}
+\end{figure}
+
+\subsubsection{Decomposition Storage Model (DSM)}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\begin{itemize}
+\item spaltenweise Speicherung
+\item ideal für OLAP
+\item Vorteile: weniger I/O, gute Kompression
+\item Nachteile: teuer für Punktabfagen, Tuple Stitching notwendig
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\vspace{-10mm}
+\includegraphics[scale=.35]{pictures/dsm1.png}
+\\
+\includegraphics[scale=.35]{pictures/dsm2.png}
+\caption{Col Store}
+\end{minipage}
+\end{figure}
+
+\subsubsection{Partition Attributes Across (PAX) Storage Model}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\vspace{10mm}
+\begin{itemize}
+\item Hybrid aus NSM \& DSM
+\item vertikale Partitionierung innerhalb einer Seite
+\item Ziel: gute Cache-Lokalität, Vorteile spaltenorientierter Verarbeitung
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\centering
+\vspace{0mm}
+\includegraphics[scale=.35]{pictures/pax.png}
+\caption{PAX}
+\end{minipage}
+\end{figure}
+
+\subsection{Datenbankkompression}
+
+\begin{itemize}
+\item Motivation: I/O ist Hauptengpass
+\item Anforderungen: verlusfrei, feste Länge, späte Dekompression
+\item Granularität: Block, Tupel, Attribut, Spalte
+\end{itemize}
+
+\subsection{Spaltenorientierte Kompression}
+
+\begin{itemize}
+\item Run-Length Encoding
+\item Delta Encoding
+\item Dictionary Encoding
+\item Bit-Packing
+\item (Bitmap Encoding)
+\end{itemize}
+
+\subsection{Suche nach Tupeln}
+
+\begin{itemize}
+\item naiver Ansatz: Full Table Scan
+\item Problem: langsam, teuer
+\item Lösung: Indexstrukturen
+\end{itemize}
+
+\subsection{Indexstrukturen - Grundlangen}
+
+\begin{itemize}
+\item Index = Suchschlüssel $\rightarrow$ Datenzeiger
+\item deutlich kleiner als Datendatei
+\item Typen: sortierte Indizes, Hash-Indizes
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/indexdatei.png}
+\caption{Aufbau einer Indexdatei}
+\end{figure}
+
+\noindent
+\textbf{Evaluationskriterien für Indizes}
+\begin{itemize}
+\item Unterstützte Zugriffstypen
+\item Such-, Insert-, Delete-Kosten
+\item Speicher- und Pflegeaufwand
+\end{itemize}
+
+\subsection{Primär- vs Sekundärindizes}
+
+\begin{figure}[H]
+\begin{minipage}[t]{.45\textwidth}
+\textbf{Primär}
+\begin{itemize}
+\item Definiert physische Sortierung
+\item Maximal einer pro Relation
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{.45\textwidth}
+\textbf{Sekundär}
+\begin{itemize}
+\item Andere Suchschlüssel
+\item Bucket-Struktur für Mehrfachtreffer
+\end{itemize}
+\end{minipage}
+\end{figure}
+
+\subsection{ISAM (Index-Sequential Access Method)}
+
+\begin{itemize}
+\item Sortierte Datenseiten + Indexseiten
+\item Gute Unterstützung für Bereichsanfragen
+\item Problem: Starre Struktur bei vielen Inserts
+\item ähnlich zu B/$B^+$-Baum bei Einfügen, Löschen \& Verschieben
+\end{itemize}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=.5]{pictures/isam.png}
+\caption{ISAM}
+\end{figure}
+
+\subsection{Hashing vs. Bäume}
+
+\begin{itemize}
+\item Hashing benötigt weniger Seitenzugriffe, aber Performance kann sich verschlechtern, wenn Funktion schwach
+\item Hashing ranodmisiert Schlüsselverteilung $\rightarrow$ geringe räumliche Lokalität
+\item unterstützt weder Bereichsanfragen noch Präfixanfragen
+\item meist $B^+$-Baum Standard-Indexstruktur in DBMS
+\end{itemize}
+
+\subsection{Indexe in SQL}
+
+\textbf{Syntax (allgemeinste Form)}
+\begin{lstlisting}[language=SQL]
+CREATE [UNIQUE] INDEX <INDEX name> ON <relation name> (<list of attributes>);
+DROP INDEX <INDEX name>;
+\end{lstlisting}
+
+\begin{itemize}
+\item SQL bietet viele erweiterte Indexoptionen (z.B. Bitmap-, funktionsbasierte, partitionierte Indizes)
+\item Indexe werden standardmäßig aufsteigend angelegt
+\item Primärschlüssel erzeugen automatisch einen Index
+\end{itemize}
+
+\begin{lstlisting}[language=SQL]
+CREATE INDEX city_name_idx ON CITY(name);
+\end{lstlisting}
 
 \end{document}
